@@ -116,10 +116,19 @@
       return next(action)
       }
 
+      const logger = (store) => (next) => (action) => {
+            console.group(action.type)
+            console.log('The action: ', action)
+            const result = next(action)
+            console.log('The new state: ', store.getState())
+            console.groupEnd()
+        return result
+        }
+
       const store = Redux.createStore(Redux.combineReducers({
         todos,
         goals,
-      }),Redux.applyMiddleware(checker))
+      }),Redux.applyMiddleware(checker,logger))
 
       store.subscribe(() => {
         const {
@@ -215,10 +224,16 @@
       )
     }
     class Todos extends React.Component {
-      addItem =(E) => {
+      addItem =(e) => {
         e.preventDefault()
         const name =this.input.value
         this.input.value = ''
+
+        this.props.store.dispatch(addTodoAction({
+          name,
+          complete: false,
+          id: generateId()
+        }))
       }
       render() {
         return (
@@ -227,7 +242,7 @@
             <input
               type = 'text'
               placeholder='Add Todo'
-              ref ={(input) => this.input=input}
+              ref ={(input) => this.input= input}
               />
 
               <button onClick = {this.addItem}> Add Todo </button>
@@ -250,14 +265,14 @@
       render() {
         return (
           <div>
-            <Todos />
+            <Todos store={this.props.store}/>
             <Goals />
           </div>
         )
       }
     }
     ReactDOM.render(
-      <App />,
+      <App store={store}/>,
       document.getElementById('app')
     )
   </script>
